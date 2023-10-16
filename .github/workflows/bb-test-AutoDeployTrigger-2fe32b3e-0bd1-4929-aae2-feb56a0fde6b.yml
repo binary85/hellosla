@@ -1,0 +1,42 @@
+name: Trigger auto deployment for bb-test
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ master ]
+    paths:
+    - '**'
+    - '.github/workflows/bb-test-AutoDeployTrigger-2fe32b3e-0bd1-4929-aae2-feb56a0fde6b.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:
+      
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.BBTEST_AZURE_CREDENTIALS }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v1
+        with:
+          appSourcePath: ${{ github.workspace }} 
+          registryUrl: docker.io
+          registryUsername: ${{ secrets.BBTEST_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.BBTEST_REGISTRY_PASSWORD }}
+          containerAppName: bb-test
+          resourceGroup: test
+          imageToBuild: binary85/bb-test:${{ github.sha }}
+          
+
+     
+
